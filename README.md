@@ -1,30 +1,100 @@
-# No conversation
+# 📧 Проверка почтовых серверов
 
-*Automatically synced with your [v0.app](https://v0.app) deployments*
+Реальное приложение для проверки POP3, SMTP и IMAP серверов с поддержкой SSL/TLS.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/ihordrgrs-projects/v0-no-conversation)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.app-black?style=for-the-badge)](https://v0.app/chat/projects/q130nc6uy8g)
+## ✨ Возможности
 
-## Overview
+- **Реальная проверка** почтовых серверов (без имитаций!)
+- **Поддержка протоколов**: POP3, SMTP, IMAP
+- **SSL/TLS соединения** для безопасной проверки
+- **Анализ возможностей** каждого протокола
+- **Красивый интерфейс** с реальными данными
 
-This repository will stay in sync with your deployed chats on [v0.app](https://v0.app).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.app](https://v0.app).
+## 🚀 Быстрый запуск
 
-## Deployment
+### 1. **Установите зависимости**
+```bash
+npm install
+```
 
-Your project is live at:
+### 2. **Запустите сервер**
+```bash
+npm run dev
+```
 
-**[https://vercel.com/ihordrgrs-projects/v0-no-conversation](https://vercel.com/ihordrgrs-projects/v0-no-conversation)**
+### 3. **Откройте в браузере**
+```
+http://localhost:3000
+```
 
-## Build your app
+## 📋 Что проверяется
 
-Continue building your app on:
+### **SMTP (отправка почты)**
+- Подключение к серверу
+- Чтение баннера
+- Определение возможностей (STARTTLS, AUTH, SIZE)
 
-**[https://v0.app/chat/projects/q130nc6uy8g](https://v0.app/chat/projects/q130nc6uy8g)**
+### **IMAP (получение почты)**
+- Подключение к серверу
+- Чтение баннера
+- Анализ возможностей (STARTTLS, AUTH, IDLE)
 
-## How It Works
+### **POP3 (получение почты)**
+- Подключение к серверу
+- Чтение баннера
+- Определение возможностей (TOP, USER, PIPELINING)
 
-1. Create and modify your project using [v0.app](https://v0.app)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+## 🔧 Технические детали
+
+- **Next.js 14** с TypeScript
+- **Реальные TCP/TLS соединения** (net, tls модули)
+- **Tailwind CSS** для стилизации
+- **Lucide React** для иконок
+
+## 📱 Интерфейс
+
+- **Статистика** по серверам
+- **Список серверов** с возможностью проверки
+- **Результаты проверки** в реальном времени
+- **Информация о протоколах**
+
+## 🌐 Тестовые серверы
+
+Приложение уже содержит тестовые серверы:
+- Gmail SMTP (smtp.gmail.com:587)
+- Gmail IMAP (imap.gmail.com:993)
+- Gmail POP3 (pop.gmail.com:995)
+
+## 🎯 Как использовать
+
+1. **Откройте приложение** в браузере
+2. **Нажмите "Проверить"** на любом сервере
+3. **Увидите реальные результаты** подключения
+4. **Анализируйте возможности** каждого протокола
+
+## 📊 API Endpoints
+
+- `GET /api/mail-check` - получить список серверов
+- `POST /api/mail-check` - проверить конкретный сервер
+
+## 🔒 Безопасность
+
+- Проверка только подключения (без аутентификации)
+- Поддержка SSL/TLS соединений
+- Таймауты для предотвращения зависания
+
+## 🚧 Разработка
+
+### Добавление новых серверов
+Отредактируйте массив `mailServers` в `src/app/api/mail-check/route.ts`
+
+### Добавление новых протоколов
+Создайте новую логику в функции `checkMailServer`
+
+## 📝 Лицензия
+
+MIT License
+
+---
+
+**Приложение готово к использованию!** 🎉
