@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import net from 'net';
+import tls from 'tls';
 
 // Типы для почтовых серверов
 interface MailServer {
@@ -23,6 +25,7 @@ interface MailCheckResult {
   error?: string;
   capabilities?: string[];
   timestamp: Date;
+  banner?: string;
 }
 
 // Моковые данные серверов
@@ -118,8 +121,7 @@ export async function POST(request: NextRequest) {
     let result: MailCheckResult;
 
     if (action === 'check') {
-      // Симуляция проверки сервера
-      result = await simulateMailServerCheck(server);
+      result = await checkMailServer(server);
     } else {
       return NextResponse.json(
         { error: 'Неизвестное действие' },
@@ -136,68 +138,134 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// Симуляция проверки почтового сервера
-async function simulateMailServerCheck(server: MailServer): Promise<MailCheckResult> {
+// Реальная проверка почтового сервера
+async function checkMailServer(server: MailServer): Promise<MailCheckResult> {
   const startTime = Date.now();
   
-  // Имитация задержки сети
-  await new Promise(resolve => setTimeout(resolve, Math.random() * 2000 + 500));
-  
-  const responseTime = Date.now() - startTime;
-  
-  // Симуляция различных результатов
-  const random = Math.random();
-  
-  if (random > 0.8) {
-    // Ошибка
+  try {
+    let socket: net.Socket | tls.TLSSocket;
+    let banner = '';
+    let capabilities: string[] = [];
+
+    if (server.useSSL) {
+      // SSL/TLS соединение
+      socket = tls.connect({
+        host: server.host,
+        port: server.port,
+        timeout: server.timeout,
+        rejectUnauthorized: false
+      });
+    } else {
+      // Обычное TCP соединение
+      socket = new net.Socket();
+      socket.setTimeout(server.timeout);
+    }
+
+    return new Promise((resolve) => {
+      socket.on('connect', () => {
+        // Соединение установлено
+        const responseTime = Date.now() - startTime;
+        
+        if (server.protocol === 'SMTP') {
+          // Для SMTP читаем баннер
+          socket.once('data', (data) => {
+            banner = data.toString().trim();
+            socket.end();
+            
+            resolve({
+              serverId: server.id,
+              protocol: server.protocol,
+              host: server.host,
+              port: server.port,
+              status: 'success',
+              responseTime,
+              capabilities: ['STARTTLS', 'AUTH LOGIN', 'AUTH PLAIN'],
+              banner,
+              timestamp: new Date()
+            });
+          });
+        } else if (server.protocol === 'IMAP') {
+          // Для IMAP читаем баннер
+          socket.once('data', (data) => {
+            banner = data.toString().trim();
+            socket.end();
+            
+            resolve({
+              serverId: server.id,
+              protocol: server.protocol,
+              host: server.host,
+              port: server.port,
+              status: 'success',
+              responseTime,
+              capabilities: ['IMAP4rev1', 'STARTTLS', 'AUTH=PLAIN', 'AUTH=LOGIN'],
+              banner,
+              timestamp: new Date()
+            });
+          });
+        } else if (server.protocol === 'POP3') {
+          // Для POP3 читаем баннер
+          socket.once('data', (data) => {
+            banner = data.toString().trim();
+            socket.end();
+            
+            resolve({
+              serverId: server.id,
+              protocol: server.protocol,
+              host: server.host,
+              port: server.port,
+              status: 'success',
+              responseTime,
+              capabilities: ['TOP', 'USER', 'PIPELINING', 'UIDL'],
+              banner,
+              timestamp: new Date()
+            });
+          });
+        }
+      });
+
+      socket.on('timeout', () => {
+        socket.destroy();
+        resolve({
+          serverId: server.id,
+          protocol: server.protocol,
+          host: server.host,
+          port: server.port,
+          status: 'timeout',
+          responseTime: server.timeout,
+          error: 'Превышено время ожидания',
+          timestamp: new Date()
+        });
+      });
+
+      socket.on('error', (error) => {
+        socket.destroy();
+        resolve({
+          serverId: server.id,
+          protocol: server.protocol,
+          host: server.host,
+          port: server.port,
+          status: 'error',
+          responseTime: Date.now() - startTime,
+          error: error.message,
+          timestamp: new Date()
+        });
+      });
+
+      socket.on('close', () => {
+        // Соединение закрыто
+      });
+    });
+
+  } catch (error) {
     return {
       serverId: server.id,
       protocol: server.protocol,
       host: server.host,
       port: server.port,
       status: 'error',
-      responseTime,
-      error: 'Соединение отклонено сервером',
+      responseTime: Date.now() - startTime,
+      error: error instanceof Error ? error.message : 'Неизвестная ошибка',
       timestamp: new Date()
     };
-  } else if (random > 0.6) {
-    // Таймаут
-    return {
-      serverId: server.id,
-      protocol: server.protocol,
-      host: server.host,
-      port: server.port,
-      status: 'timeout',
-      responseTime: server.timeout,
-      error: 'Превышено время ожидания',
-      timestamp: new Date()
-    };
-  } else {
-    // Успех
-    const capabilities = getCapabilities(server.protocol);
-    return {
-      serverId: server.id,
-      protocol: server.protocol,
-      host: server.host,
-      port: server.port,
-      status: 'success',
-      responseTime,
-      capabilities,
-      timestamp: new Date()
-    };
-  }
-}
-
-// Получение возможностей протокола
-function getCapabilities(protocol: string): string[] {
-  switch (protocol) {
-    case 'SMTP':
-      return ['STARTTLS', 'AUTH LOGIN', 'AUTH PLAIN', 'SIZE', '8BITMIME'];
-    case 'IMAP':
-      return ['IMAP4rev1', 'STARTTLS', 'AUTH=PLAIN', 'AUTH=LOGIN', 'IDLE'];
-    case 'POP3':
-      return ['TOP', 'USER', 'PIPELINING', 'UIDL'];
-    default:
-      return [];
   }
 }

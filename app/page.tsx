@@ -20,6 +20,8 @@ import {
 import { StatsCard, UsersStatsCard, TasksStatsCard, SystemHealthCard } from '@/components/StatsCard';
 import { TasksList } from '@/components/TasksList';
 import { UsersList } from '@/components/UsersList';
+import { MailServersList } from '@/components/MailServersList';
+import { MailStats } from '@/components/MailStats';
 import { statsAPI, Stats } from '@/services/api';
 
 export default function DashboardPage() {
@@ -205,10 +207,11 @@ export default function DashboardPage() {
 
         {/* Основной контент */}
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="overview">Обзор</TabsTrigger>
             <TabsTrigger value="users">Пользователи</TabsTrigger>
             <TabsTrigger value="tasks">Задачи</TabsTrigger>
+            <TabsTrigger value="mail">Почта</TabsTrigger>
             <TabsTrigger value="monitoring">Мониторинг</TabsTrigger>
           </TabsList>
 
@@ -281,6 +284,41 @@ export default function DashboardPage() {
 
           <TabsContent value="tasks" className="space-y-6">
             <TasksList />
+          </TabsContent>
+
+          <TabsContent value="mail" className="space-y-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <MailStats />
+              <div className="space-y-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      📧 Быстрая проверка
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Проверьте состояние ваших почтовых серверов POP3, SMTP и IMAP
+                    </p>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="w-4 h-4 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-xs">📤</span>
+                        <span>SMTP - отправка почты</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="w-4 h-4 bg-green-100 text-green-800 rounded-full flex items-center justify-center text-xs">📥</span>
+                        <span>IMAP - получение почты</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="w-4 h-4 bg-purple-100 text-purple-800 rounded-full flex items-center justify-center text-xs">📬</span>
+                        <span>POP3 - получение почты</span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+            <MailServersList />
           </TabsContent>
 
           <TabsContent value="monitoring" className="space-y-6">
